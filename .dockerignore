@@ -1,0 +1,45 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Uploaded and translated files
+uploads/
+translated/
+
+# Logs
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Document files (in case uploaded to repo)
+*.pdf
+*.docx
+*.doc
+*.xlsx
+*.xls
+*.pptx
+*.ppt

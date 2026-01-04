@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Translator | EDC</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Barlow', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #F7F7F7;
+            min-height: 100vh;
+            padding: 0;
+            color: #1B365D;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #1B365D;
+            color: white;
+            padding: 48px 40px;
+            text-align: left;
+        }
+
+        .header h1 {
+            font-size: 2.25rem;
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .keyboard-hint {
+            display: inline-block;
+            margin-left: 12px;
+            padding: 4px 10px;
+            background: rgba(255,255,255,0.15);
+            font-size: 0.75rem;
+            font-weight: 500;
+            border-radius: 4px;
+        }
+
+        .content {
+            padding: 48px 40px;
+        }
+
+        /* Upload section with enhanced drag-drop */
+        .upload-section {
+            background: #F7F7F7;
+            border: 2px dashed #D1D5DB;
+            padding: 56px 40px;
+            text-align: center;
+            margin-bottom: 32px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .upload-section:hover {
+            border-color: #00A5B5;
+            background: #F0FDFA;
+        }
+
+        .upload-section.dragover {
+            border-color: #00A5B5;
+            background: #E0F7FA;
+            transform: scale(1.01);
+            border-width: 3px;
+        }
+
+        .upload-section.dragover::after {
+            content: 'Drop files here';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #00A5B5;
+            background: rgba(255,255,255,0.95);
+            padding: 24px 48px;
+            border-radius: 8px;
+            z-index: 10;
+        }
+
+        .upload-section.has-files {
+            border-style: solid;
+            border-color: #00A5B5;
+            background: #F0FDFA;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #00A5B5;
+            margin-bottom: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .upload-section:hover .upload-icon {
+            transform: translateY(-4px);
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            margin: 24px 0;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-label {
+            background: #00A5B5;
+            color: white;
+            padding: 14px 36px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            display: inline-block;
+            border: none;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .file-label:hover {
+            background: #008B96;
+            transform: translateY(-1px);
+        }
+
+        /* File list for batch uploads */
+        .file-list {
+            margin-top: 20px;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: white;
+            border: 1px solid #E5E7EB;
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+
+        .file-item-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            color: #1B365D;
+        }
+
+        .file-item-icon {
+            font-size: 1.25rem;
+        }
+
+        .file-item-size {
+            color: #6B7280;
+            font-size: 0.875rem;
+        }
+
+        .file-item-remove {
+            background: none;
+            border: none;
+            color: #DC2626;
+            cursor: pointer;
+            font-size: 1.25rem;
+            padding: 4px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .file-item-remove:hover {
+            opacity: 1;
+        }
+
+        .file-count {
+            margin-top: 16px;
+            color: #6B7280;
+            font-weight: 500;
+        }
+
+        .clear-all-btn {
+            background: none;
+            border: 1px solid #DC2626;
+            color: #DC2626;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-left: 12px;
+            transition: all 0.2s;
+        }
+
+        .clear-all-btn:hover {
+            background: #DC2626;
+            color: white;
+        }
+
+        .language-selection {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            color: #1B365D;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .form-group select {
+            padding: 12px 16px;
+            border: 1px solid #D1D5DB;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+            background: white;
+            cursor: pointer;
+            color: #1B365D;
+            transition: border-color 0.2s;
+        }
+
+        .form-group select:focus {
+            outline: none;
+            border-color: #00A5B5;
+        }
+
+        .translate-btn {
+            background: #1B365D;
+            color: white;
+            padding: 16px 48px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-family: inherit;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .translate-btn:hover:not(:disabled) {
+            background: #152A4A;
+            transform: translateY(-1px);
+        }
+
+        .translate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .translate-btn .shortcut-hint {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.75rem;
+            opacity: 0.7;
+            font-weight: 400;
+        }
+
+        .results {
+            display: none;
+            margin-top: 32px;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .text-box {
+            margin-bottom: 24px;
+        }
+
+        .text-box h3 {
+            color: #1B365D;
+            margin-bottom: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .text-box textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 16px;
+            border: 1px solid #D1D5DB;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 1rem;
+            resize: vertical;
+            line-height: 1.6;
+            color: #1B365D;
+        }
+
+        .text-box textarea:focus {
+            outline: none;
+            border-color: #00A5B5;
+        }
+
+        .error {
+            background: #FEF2F2;
+            color: #DC2626;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: none;
+            border-left: 4px solid #DC2626;
+            border-radius: 4px;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 48px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #E5E7EB;
+            border-top: 3px solid #00A5B5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .progress-text {
+            margin-top: 16px;
+            color: #6B7280;
+        }
+
+        .progress-file {
+            font-weight: 600;
+            color: #1B365D;
+        }
+
+        .copy-btn {
+            background: #00A5B5;
+            color: white;
+            padding: 12px 28px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 12px;
+            font-size: 0.9375rem;
+            font-weight: 600;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #008B96;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 32px;
+            border-bottom: 1px solid #E5E7EB;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 16px 24px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: inherit;
+            color: #6B7280;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1px;
+            transition: color 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: #1B365D;
+        }
+
+        .tab-btn.active {
+            background: white;
+            border-bottom-color: #00A5B5;
+            color: #1B365D;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .text-input-section {
+            background: #F7F7F7;
+            padding: 32px;
+            margin-bottom: 32px;
+            border: 1px solid #E5E7EB;
+            border-radius: 4px;
+        }
+
+        .text-input-section textarea:focus {
+            outline: none;
+            border-color: #00A5B5;
+        }
+
+        /* Success message and download */
+        .success-message {
+            text-align: center;
+            padding: 56px 40px;
+            background: #F0FDF4;
+            border-radius: 4px;
+            border: 1px solid #86EFAC;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: #1B365D;
+            color: white;
+            padding: 14px 40px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+            margin: 8px;
+        }
+
+        .download-btn:hover {
+            background: #152A4A;
+        }
+
+        /* Batch results */
+        .batch-results {
+            margin-top: 24px;
+        }
+
+        .batch-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: white;
+            border: 1px solid #E5E7EB;
+            margin-bottom: 8px;
+            border-radius: 4px;
+        }
+
+        .batch-item.success {
+            border-left: 4px solid #22C55E;
+        }
+
+        .batch-item.failed {
+            border-left: 4px solid #DC2626;
+        }
+
+        .batch-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .batch-item-name {
+            font-weight: 600;
+            color: #1B365D;
+        }
+
+        .batch-item-status {
+            font-size: 0.875rem;
+            color: #6B7280;
+        }
+
+        .batch-item-error {
+            font-size: 0.875rem;
+            color: #DC2626;
+        }
+
+        .batch-summary {
+            padding: 16px;
+            background: #F7F7F7;
+            border-radius: 4px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .batch-summary-text {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1B365D;
+        }
+
+        .download-all-btn {
+            background: #00A5B5;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: inherit;
+            margin-top: 16px;
+        }
+
+        .download-all-btn:hover {
+            background: #008B96;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .language-selection {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .header {
+                padding: 32px 20px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .keyboard-hint {
+                display: none;
+            }
+
+            .content {
+                padding: 24px 20px;
+            }
+
+            .upload-section {
+                padding: 40px 20px;
+            }
+
+            .tabs {
+                flex-direction: column;
+                border-bottom: none;
+            }
+
+            .tab-btn {
+                border-bottom: 1px solid #E5E7EB;
+                border-left: 3px solid transparent;
+                text-align: left;
+            }
+
+            .tab-btn.active {
+                border-bottom-color: #E5E7EB;
+                border-left-color: #00A5B5;
+            }
+
+            .text-input-section {
+                padding: 20px;
+            }
+
+            .success-message {
+                padding: 32px 20px;
+            }
+
+            .translate-btn .shortcut-hint {
+                display: none;
+            }
+
+            .file-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .file-item-remove {
+                align-self: flex-end;
+            }
+
+            .batch-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .download-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.25rem;
+            }
+
+            .file-label {
+                padding: 12px 24px;
+                font-size: 0.875rem;
+            }
+
+            .translate-btn {
+                padding: 14px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Document Translator <span class="keyboard-hint">⌘/Ctrl + Enter to translate</span></h1>
+            <p>Translate documents and text instantly with DeepL</p>
+        </div>
+
+        <div class="content">
+            <div class="error" id="errorMessage"></div>
+
+            <!-- Tab Navigation -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="document">Upload Documents</button>
+                <button class="tab-btn" data-tab="text">Paste Text</button>
+            </div>
+
+            <!-- Document Upload Tab -->
+            <div class="tab-content active" id="documentTab">
+                <div class="upload-section" id="dropZone">
+                    <div class="upload-icon">⬆</div>
+                    <h2 style="margin: 12px 0; color: #1B365D; font-weight: 600; font-size: 1.25rem;">Upload Your Documents</h2>
+                    <p style="color: #6B7280; margin-bottom: 6px;">Drag and drop files or click to browse</p>
+                    <p style="color: #9CA3AF; font-size: 0.875rem;">PDF, DOCX, PPTX, XLSX, TXT, HTML (Max 16MB per file)</p>
+                    
+                    <div class="file-input-wrapper">
+                        <input type="file" id="fileInput" class="file-input" accept=".pdf,.docx,.pptx,.xlsx,.txt,.html" multiple>
+                        <label for="fileInput" class="file-label">Choose Files</label>
+                    </div>
+                    
+                    <div class="file-list" id="fileList"></div>
+                    <div class="file-count" id="fileCount" style="display: none;">
+                        <span id="fileCountText"></span>
+                        <button class="clear-all-btn" id="clearAllBtn">Clear All</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Text Paste Tab -->
+            <div class="tab-content" id="textTab">
+                <div class="text-input-section">
+                    <label style="color: #1B365D; margin-bottom: 12px; display: block; font-weight: 600; font-size: 0.875rem;">Enter your text</label>
+                    <textarea id="inputText" placeholder="Paste or type text to translate..." style="width: 100%; min-height: 200px; padding: 16px; border: 1px solid #D1D5DB; border-radius: 4px; font-family: inherit; font-size: 1rem; resize: vertical; color: #1B365D;"></textarea>
+                </div>
+            </div>
+
+            <div class="language-selection">
+                <div class="form-group">
+                    <label for="sourceLanguage">Source Language (Optional)</label>
+                    <select id="sourceLanguage">
+                        <option value="">Auto-detect</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="targetLanguage">Target Language *</label>
+                    <select id="targetLanguage">
+                        <option value="EN-US">English (US)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="formality">Formality</label>
+                    <select id="formality">
+                        <option value="default">Default</option>
+                        <option value="less">Less formal</option>
+                        <option value="more">More formal</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="translate-btn" id="translateBtn" disabled>
+                Translate
+                <span class="shortcut-hint">⌘/Ctrl + Enter</span>
+            </button>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p class="progress-text">Translating your content...</p>
+                <p class="progress-file" id="progressFile"></p>
+            </div>
+
+            <div class="results" id="results">
+                <!-- Single Document Result -->
+                <div id="documentResult" style="display: none;">
+                    <div class="success-message">
+                        <div style="font-size: 40px; color: #22C55E; margin-bottom: 16px;">✓</div>
+                        <h3 style="color: #1B365D; margin-bottom: 12px; font-weight: 600; font-size: 1.25rem;">Translation Complete</h3>
+                        <p id="resultMessage" style="color: #6B7280; margin-bottom: 24px;"></p>
+                        <a id="downloadBtn" class="download-btn" href="#" download>Download File</a>
+                    </div>
+                </div>
+
+                <!-- Batch Document Result -->
+                <div id="batchResult" style="display: none;">
+                    <div class="batch-summary">
+                        <p class="batch-summary-text" id="batchSummaryText"></p>
+                    </div>
+                    <div class="batch-results" id="batchResultsList"></div>
+                </div>
+                
+                <!-- Text Result -->
+                <div id="textResult" style="display: none;">
+                    <div class="text-box">
+                        <h3>Translated Text</h3>
+                        <p id="detectedLang" style="color: #6B7280; font-size: 0.875rem; margin-bottom: 12px;"></p>
+                        <textarea id="translatedText" readonly></textarea>
+                        <button class="copy-btn" id="copyBtn">Copy to Clipboard</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        let activeTab = 'document';
+
+        // DOM elements
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const fileCount = document.getElementById('fileCount');
+        const fileCountText = document.getElementById('fileCountText');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const translateBtn = document.getElementById('translateBtn');
+        const sourceLanguage = document.getElementById('sourceLanguage');
+        const targetLanguage = document.getElementById('targetLanguage');
+        const formality = document.getElementById('formality');
+        const loading = document.getElementById('loading');
+        const progressFile = document.getElementById('progressFile');
+        const results = document.getElementById('results');
+        const translatedText = document.getElementById('translatedText');
+        const errorMessage = document.getElementById('errorMessage');
+        const dropZone = document.getElementById('dropZone');
+        const copyBtn = document.getElementById('copyBtn');
+        const inputText = document.getElementById('inputText');
+        const documentResult = document.getElementById('documentResult');
+        const batchResult = document.getElementById('batchResult');
+        const batchSummaryText = document.getElementById('batchSummaryText');
+        const batchResultsList = document.getElementById('batchResultsList');
+        const textResult = document.getElementById('textResult');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resultMessage = document.getElementById('resultMessage');
+        const detectedLang = document.getElementById('detectedLang');
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Cmd/Ctrl + Enter to translate
+            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault();
+                if (!translateBtn.disabled) {
+                    translateBtn.click();
+                }
+            }
+            // Escape to clear error
+            if (e.key === 'Escape') {
+                hideError();
+            }
+        });
+
+        // Tab handling
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.dataset.tab;
+                activeTab = tab;
+                
+                // Update tab buttons
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Update tab content
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(tab + 'Tab').classList.add('active');
+                
+                // Update button state
+                updateTranslateButton();
+                
+                // Hide results
+                results.classList.remove('show');
+                hideError();
+            });
+        });
+
+        function updateTranslateButton() {
+            if (activeTab === 'document') {
+                translateBtn.disabled = selectedFiles.length === 0;
+            } else {
+                translateBtn.disabled = !inputText.value.trim();
+            }
+        }
+
+        // Text input listener
+        inputText.addEventListener('input', updateTranslateButton);
+
+        // File size formatter
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // Get file icon based on extension
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'pdf': '📕',
+                'docx': '📘',
+                'doc': '📘',
+                'xlsx': '📗',
+                'xls': '📗',
+                'pptx': '📙',
+                'ppt': '📙',
+                'txt': '📄',
+                'html': '🌐'
+            };
+            return icons[ext] || '📄';
+        }
+
+        // Render file list
+        function renderFileList() {
+            fileList.innerHTML = '';
+            
+            if (selectedFiles.length === 0) {
+                fileCount.style.display = 'none';
+                dropZone.classList.remove('has-files');
+                return;
+            }
+            
+            dropZone.classList.add('has-files');
+            fileCount.style.display = 'block';
+            fileCountText.textContent = `${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} selected`;
+            
+            selectedFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                    <div class="file-item-name">
+                        <span class="file-item-icon">${getFileIcon(file.name)}</span>
+                        <span>${file.name}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 16px;">
+                        <span class="file-item-size">${formatFileSize(file.size)}</span>
+                        <button class="file-item-remove" data-index="${index}" title="Remove file">✕</button>
+                    </div>
+                `;
+                fileList.appendChild(item);
+            });
+            
+            // Add remove listeners
+            document.querySelectorAll('.file-item-remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.dataset.index);
+                    selectedFiles.splice(index, 1);
+                    renderFileList();
+                    updateTranslateButton();
+                });
+            });
+        }
+
+        // Clear all files
+        clearAllBtn.addEventListener('click', () => {
+            selectedFiles = [];
+            fileInput.value = '';
+            renderFileList();
+            updateTranslateButton();
+        });
+
+        // Load available languages
+        async function loadLanguages() {
+            try {
+                const response = await fetch('/languages');
+                const data = await response.json();
+
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+
+                // Populate source languages
+                data.source_languages.forEach(lang => {
+                    const option = document.createElement('option');
+                    option.value = lang.code;
+                    option.textContent = lang.name;
+                    sourceLanguage.appendChild(option);
+                });
+
+                // Populate target languages
+                targetLanguage.innerHTML = '';
+                data.target_languages.forEach(lang => {
+                    const option = document.createElement('option');
+                    option.value = lang.code;
+                    option.textContent = lang.name;
+                    targetLanguage.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading languages:', error);
+                showError('Failed to load languages. Please refresh the page.');
+            }
+        }
+
+        // File input change
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            addFiles(files);
+        }
+
+        function addFiles(files) {
+            files.forEach(file => {
+                // Check if file already exists
+                const exists = selectedFiles.some(f => f.name === file.name && f.size === file.size);
+                if (!exists) {
+                    selectedFiles.push(file);
+                }
+            });
+            renderFileList();
+            updateTranslateButton();
+            hideError();
+        }
+
+        // Enhanced drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('dragover');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const files = Array.from(e.dataTransfer.files);
+            addFiles(files);
+        });
+
+        // Translate button
+        translateBtn.addEventListener('click', async () => {
+            loading.classList.add('show');
+            results.classList.remove('show');
+            documentResult.style.display = 'none';
+            batchResult.style.display = 'none';
+            textResult.style.display = 'none';
+            hideError();
+            translateBtn.disabled = true;
+
+            try {
+                if (activeTab === 'document') {
+                    if (selectedFiles.length === 1) {
+                        await translateDocument();
+                    } else {
+                        await translateBatch();
+                    }
+                } else {
+                    await translateTextContent();
+                }
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                loading.classList.remove('show');
+                progressFile.textContent = '';
+                updateTranslateButton();
+            }
+        });
+
+        async function translateDocument() {
+            const file = selectedFiles[0];
+            progressFile.textContent = `Translating: ${file.name}`;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('target_lang', targetLanguage.value);
+            formData.append('formality', formality.value);
+            
+            if (sourceLanguage.value) {
+                formData.append('source_lang', sourceLanguage.value);
+            }
+
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Translation failed');
+            }
+
+            // Show document result
+            resultMessage.textContent = `${data.original_filename} → ${data.translated_filename}`;
+            downloadBtn.href = data.download_url;
+            downloadBtn.download = data.translated_filename;
+            documentResult.style.display = 'block';
+            batchResult.style.display = 'none';
+            textResult.style.display = 'none';
+            results.classList.add('show');
+            
+            // Clear files after successful translation
+            selectedFiles = [];
+            fileInput.value = '';
+            renderFileList();
+        }
+
+        async function translateBatch() {
+            const formData = new FormData();
+            
+            selectedFiles.forEach(file => {
+                formData.append('files[]', file);
+            });
+            
+            formData.append('target_lang', targetLanguage.value);
+            formData.append('formality', formality.value);
+            
+            if (sourceLanguage.value) {
+                formData.append('source_lang', sourceLanguage.value);
+            }
+
+            progressFile.textContent = `Translating ${selectedFiles.length} files...`;
+
+            const response = await fetch('/upload-batch', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok && !data.results) {
+                throw new Error(data.error || 'Batch translation failed');
+            }
+
+            // Show batch results
+            batchSummaryText.textContent = data.message;
+            batchResultsList.innerHTML = '';
+            
+            data.results.forEach(result => {
+                const item = document.createElement('div');
+                item.className = `batch-item ${result.success ? 'success' : 'failed'}`;
+                
+                if (result.success) {
+                    item.innerHTML = `
+                        <div class="batch-item-info">
+                            <span class="batch-item-name">${result.original_filename}</span>
+                            <span class="batch-item-status">→ ${result.translated_filename}</span>
+                        </div>
+                        <a href="${result.download_url}" class="download-btn" download="${result.translated_filename}">Download</a>
+                    `;
+                } else {
+                    item.innerHTML = `
+                        <div class="batch-item-info">
+                            <span class="batch-item-name">${result.original_filename}</span>
+                            <span class="batch-item-error">✕ ${result.error}</span>
+                        </div>
+                    `;
+                }
+                
+                batchResultsList.appendChild(item);
+            });
+            
+            documentResult.style.display = 'none';
+            batchResult.style.display = 'block';
+            textResult.style.display = 'none';
+            results.classList.add('show');
+            
+            // Clear files after translation
+            selectedFiles = [];
+            fileInput.value = '';
+            renderFileList();
+        }
+
+        async function translateTextContent() {
+            const text = inputText.value.trim();
+            if (!text) return;
+
+            progressFile.textContent = 'Translating text...';
+
+            const response = await fetch('/translate-text', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    text: text,
+                    target_lang: targetLanguage.value,
+                    source_lang: sourceLanguage.value || null,
+                    formality: formality.value
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Translation failed');
+            }
+
+            // Show text result
+            translatedText.value = data.translated_text;
+            if (data.detected_source_lang) {
+                detectedLang.textContent = `Detected language: ${data.detected_source_lang}`;
+            } else {
+                detectedLang.textContent = '';
+            }
+            documentResult.style.display = 'none';
+            batchResult.style.display = 'none';
+            textResult.style.display = 'block';
+            results.classList.add('show');
+        }
+
+        // Copy button
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(translatedText.value).then(() => {
+                const origText = copyBtn.textContent;
+                copyBtn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = origText;
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                translatedText.select();
+                document.execCommand('copy');
+                const origText = copyBtn.textContent;
+                copyBtn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = origText;
+                }, 2000);
+            });
+        });
+
+        // Error handling
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            // Scroll to error
+            errorMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('show');
+        }
+
+        // Load languages on page load
+        loadLanguages();
+    </script>
+</body>
+</html>
